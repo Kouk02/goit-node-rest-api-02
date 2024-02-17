@@ -1,8 +1,19 @@
-import express from "express";
-import morgan from "morgan";
-import cors from "cors";
+const express = require("express");
+const morgan = require("morgan");
+const cors = require("cors");
+const mongoose = require('mongoose');
+const contactsRouter = require("./routes/contactsRouter.js");
 
-import contactsRouter from "./routes/contactsRouter.js";
+const dbUrl = 'mongodb+srv://user123:09876543210@cluster0.ppqewz9.mongodb.net/db-contacts?retryWrites=true&w=majority';
+
+mongoose.connect(dbUrl, { useNewUrlParser: true, useUnifiedTopology: true });
+
+const db = mongoose.connection;
+
+db.on('error', console.error.bind(console, 'MongoDB connection error:'));
+db.once('open', () => {
+  console.log('Database connection successful');
+});
 
 const app = express();
 
