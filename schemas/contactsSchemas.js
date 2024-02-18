@@ -13,8 +13,14 @@ const updateContactSchema = Joi.object({
   'object.missing': 'Body must have at least one field'
 });
 
+const patchContactSchema = Joi.object({
+  favorite: Joi.boolean().required()
+});
+
+
 module.exports = {
   createContactSchema,
-  updateContactSchema
+  updateContactSchema,
+  patchContactSchema
 };
 

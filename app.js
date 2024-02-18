@@ -3,8 +3,10 @@ const morgan = require("morgan");
 const cors = require("cors");
 const mongoose = require('mongoose');
 const contactsRouter = require("./routes/contactsRouter.js");
+require('dotenv').config(); 
 
-const dbUrl = 'mongodb+srv://user123:09876543210@cluster0.ppqewz9.mongodb.net/db-contacts?retryWrites=true&w=majority';
+
+const dbUrl = process.env.DB_HOST;
 
 mongoose.connect(dbUrl, { useNewUrlParser: true, useUnifiedTopology: true });
 
@@ -32,6 +34,7 @@ app.use((err, req, res, next) => {
   res.status(status).json({ message });
 });
 
-app.listen(3000, () => {
-  console.log("Server is running. Use our API on port: 3000");
+const PORT = process.env.PORT || 3000; 
+app.listen(PORT, () => {
+  console.log(`Server is running. Use our API on port: ${PORT}`);
 });

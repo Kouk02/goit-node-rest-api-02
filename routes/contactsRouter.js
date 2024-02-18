@@ -8,13 +8,13 @@ const {
   updateContactById,
   updateFavoriteStatus
 } = require("../controllers/contactsControllers.js");
+const isValidId = require("../isValidId.js"); 
 
 router.get("/", getAllContacts);
-router.get("/:id", getContact);
-router.delete("/:id", deleteContact);
+router.get("/:id", isValidId, getContact); 
+router.delete("/:id", isValidId, deleteContact); 
 router.post("/", createContact);
-router.put("/:id", updateContactById);
-router.patch("/:id/favorite", updateFavoriteStatus);
-
+router.put("/:id", isValidId, updateContactById); 
+router.patch("/:id/favorite", isValidId, updateFavoriteStatus); 
 
 module.exports = router;
