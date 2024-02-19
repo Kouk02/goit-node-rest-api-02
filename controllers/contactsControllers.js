@@ -51,17 +51,15 @@ async function createContact(req, res, next) {
   }
 }
 
+
+
 async function updateContactById(req, res, next) {
   const { id } = req.params;
-  const { error: validationError } = updateContactSchema.validate(req.body);
-  if (validationError) {
-    return res.status(400).json({ message: validationError.message });
-  }
+
   try {
-    const { name, email, phone } = req.body;
-    
-    if (!name && !email && !phone) {
-      return res.status(400).json({ message: "At least one field (name, email, phone) must be provided for update" });
+    const { error: validationError } = updateContactSchema.validate(req.body);
+    if (validationError) {
+      return res.status(400).json({ message: validationError.message });
     }
 
     const existingContact = await getContactById(id); 
@@ -69,12 +67,28 @@ async function updateContactById(req, res, next) {
       return res.status(404).json({ message: "Contact not found" });
     }
 
-    const phoneRegex = /^\+?\d+$/;
-    if (phone !== undefined && !phoneRegex.test(phone)) {
-      return res.status(400).json({ message: "Phone must contain only digits and optional '+' symbol" });
+    let updateData = {};
+    const { name, email, phone } = req.body;
+
+    if (name !== undefined) {
+      updateData.name = name;
+    }
+    if (email !== undefined) {
+      updateData.email = email;
+    }
+    if (phone !== undefined) {
+      const { error: phoneValidationError } = updateContactSchema.validate({ phone });
+      if (phoneValidationError) {
+        return res.status(400).json({ message: phoneValidationError.message });
+      }
+      updateData.phone = phone;
     }
 
-    const updatedContact = await updateContact(id, req.body); 
+    if (Object.keys(updateData).length === 0) {
+      return res.status(400).json({ message: "At least one field (name, email, phone) must be provided for update" });
+    }
+
+    const updatedContact = await updateContact(id, updateData); 
 
     res.status(200).json(updatedContact);
   } catch (error) {
@@ -91,23 +105,13 @@ async function updateFavoriteStatus(req, res, next) {
     if (!existingContact) {
       return res.status(404).json({ message: "Contact not found" });
     }
-   
-   
-    if ('favorite' in req.body) {
-      const { error } = patchContactSchema.validate(req.body);
-      if (error) {
-        return res.status(400).json({ message: error.message });
-      }
-    }
-
 
     let updatedFavorite = existingContact.favorite;
-
 
     if ('favorite' in req.body) {
       updatedFavorite = req.body.favorite;
     } else {
-    
+
       updatedFavorite = !updatedFavorite;
     }
 

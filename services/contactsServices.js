@@ -8,17 +8,17 @@ async function listContacts() {
   }
 }
 
-async function getContactById(contactId) {
+async function getContactById(id) {
   try {
-    return await ContactModel.findById(contactId);
+    return await ContactModel.findById(id);
   } catch (error) {
     throw new Error(`Failed to get contact by id: ${error.message}`);
   }
 }
 
-async function removeContact(contactId) {
+async function removeContact(id) {
   try {
-    return await ContactModel.findByIdAndDelete(contactId);
+    return await ContactModel.findByIdAndDelete(id);
   } catch (error) {
     throw new Error(`Failed to remove contact: ${error.message}`);
   }
@@ -32,9 +32,9 @@ async function addContact(name, email, phone) {
   }
 }
 
-async function updateContact(contactId, newData) {
+async function updateContact(id, newData) {
   try {
-    return await ContactModel.findByIdAndUpdate(contactId, newData, { new: true });
+    return await ContactModel.findByIdAndUpdate(id, newData, { new: true });
   } catch (error) {
     throw new Error(`Failed to update contact: ${error.message}`);
   }
