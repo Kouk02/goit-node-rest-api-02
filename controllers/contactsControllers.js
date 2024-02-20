@@ -67,28 +67,7 @@ async function updateContactById(req, res, next) {
       return res.status(404).json({ message: "Contact not found" });
     }
 
-    let updateData = {};
-    const { name, email, phone } = req.body;
-
-    if (name !== undefined) {
-      updateData.name = name;
-    }
-    if (email !== undefined) {
-      updateData.email = email;
-    }
-    if (phone !== undefined) {
-      const { error: phoneValidationError } = updateContactSchema.validate({ phone });
-      if (phoneValidationError) {
-        return res.status(400).json({ message: phoneValidationError.message });
-      }
-      updateData.phone = phone;
-    }
-
-    if (Object.keys(updateData).length === 0) {
-      return res.status(400).json({ message: "At least one field (name, email, phone) must be provided for update" });
-    }
-
-    const updatedContact = await updateContact(id, updateData); 
+    const updatedContact = await updateContact(id, req.body); 
 
     res.status(200).json(updatedContact);
   } catch (error) {
@@ -106,18 +85,12 @@ async function updateFavoriteStatus(req, res, next) {
       return res.status(404).json({ message: "Contact not found" });
     }
 
-    let updatedFavorite = existingContact.favorite;
-
-    if ('favorite' in req.body) {
-      updatedFavorite = req.body.favorite;
-    } else {
-
-      updatedFavorite = !updatedFavorite;
+    const { error: validationError } = patchContactSchema.validate(req.body);
+    if (validationError) {
+      return res.status(400).json({ message: validationError.message });
     }
 
-    const updatedContact = await updateContact(id, {
-      favorite: updatedFavorite
-    });
+    const updatedContact = await updateContact(id, req.body); 
 
     res.status(200).json(updatedContact);
 
@@ -125,7 +98,6 @@ async function updateFavoriteStatus(req, res, next) {
     res.status(500).json({ message: error.message });
   }
 }
-
 
 module.exports = {
   getAllContacts,
