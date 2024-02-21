@@ -19,12 +19,8 @@ const updateContactSchema = Joi.object({
 
 const patchContactSchema = Joi.object({
   favorite: Joi.boolean().required(),
-  name: Joi.string().when('favorite', { is: true, then: Joi.required() }),
-  email: Joi.string().email(),
-  phone: Joi.string().pattern(/^\+?\d+$/)
 }).messages({
   'any.required': 'Favorite field is required',
-  'string.pattern.base': 'Phone must contain only digits and optional "+" symbol'
 });
 
 module.exports = {
