@@ -1,8 +1,22 @@
-import express from "express";
-import morgan from "morgan";
-import cors from "cors";
+const express = require("express");
+const morgan = require("morgan");
+const cors = require("cors");
+const mongoose = require('mongoose');
+const contactsRouter = require("./routes/contactsRouter.js");
+const router = require("./routes/authRouter.js");
+require('dotenv').config(); 
 
-import contactsRouter from "./routes/contactsRouter.js";
+
+const dbUrl = process.env.DB_HOST;
+
+mongoose.connect(dbUrl, { useNewUrlParser: true, useUnifiedTopology: true });
+
+const db = mongoose.connection;
+
+db.on('error', console.error.bind(console, 'MongoDB connection error:'));
+db.once('open', () => {
+  console.log('Database connection successful');
+});
 
 const app = express();
 
@@ -10,7 +24,7 @@ app.use(morgan("tiny"));
 app.use(cors());
 app.use(express.json());
 
-app.use("/api/contacts", contactsRouter);
+app.use('/api/users', router);
 
 app.use((_, res) => {
   res.status(404).json({ message: "Route not found" });
@@ -21,6 +35,7 @@ app.use((err, req, res, next) => {
   res.status(status).json({ message });
 });
 
-app.listen(3000, () => {
-  console.log("Server is running. Use our API on port: 3000");
+const PORT = process.env.PORT || 3000; 
+app.listen(PORT, () => {
+  console.log(`Server is running. Use our API on port: ${PORT}`);
 });

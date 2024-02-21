@@ -1,4 +1,4 @@
-const ContactModel = require("./contacts.js");
+const ContactModel = require("../models/contacts.js");
 
 async function listContacts() {
   try {
