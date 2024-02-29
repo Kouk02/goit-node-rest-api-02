@@ -1,20 +1,18 @@
-// authMiddlewares.js
 const jwt = require('jsonwebtoken');
 const User = require('../models/userModel');
 
-// Middleware для перевірки токена
-exports.verifyToken = async (req, res, next) => {
-  const token = req.header('Authorization');
-  if (!token) {
-    return res.status(401).json({ message: "Not authorized" });
-  }
+const JWT_SECRET = process.env.TOKEN_SECRET || 'default_secret_key';
 
+exports.verifyToken = async (req, res, next) => {
   try {
-    const decoded = jwt.verify(token, process.env.TOKEN_SECRET);
-    const user = await User.findById(decoded._id);
+    const token = req.header('Authorization').replace('Bearer ', '');
+    const decoded = jwt.verify(token, JWT_SECRET);
+    const user = await User.findById(decoded.sub);
+
     if (!user || user.token !== token) {
-      return res.status(401).json({ message: "Not authorized" });
+      throw new Error();
     }
+
     req.user = user;
     next();
   } catch (err) {
