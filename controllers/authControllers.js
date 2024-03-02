@@ -2,6 +2,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/userModel');
 const Joi = require('joi');
+const Contacts = require('../schemas/authSchemas');
 
 const JWT_SECRET = process.env.TOKEN_SECRET || 'default_secret_key';
 
@@ -33,6 +34,12 @@ exports.registerUser = async (req, res, next) => {
     });
 
     const savedUser = await newUser.save();
+
+    
+    const newContact = new Contacts({
+      owner: savedUser._id,
+    });
+    await newContact.save();
 
     const payload = {
       sub: savedUser._id,
@@ -69,7 +76,8 @@ exports.loginUser = async (req, res) => {
 
     const { email, password } = req.body;
     const user = await User.findOne({ email });
-    if (!user || !await bcrypt.compare(password, user.password)) {
+  const passwordMatch = user ? await bcrypt.compare(password, user.password) : false;
+    if (!user || !passwordMatch) {
       return res.status(401).json({ message: "Email or password is wrong" });
     }
 
@@ -94,7 +102,7 @@ exports.loginUser = async (req, res) => {
   }
 };
 
-exports.logoutUser = async (req, res) => {
+exports.logoutUser = async (req, res, next) => { 
   try {
     const userId = req.user._id;
 
@@ -108,14 +116,11 @@ exports.logoutUser = async (req, res) => {
 
     res.status(204).send();
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    next(err); 
   }
 };
 
-
-
-
-exports.getCurrentUser = async (req, res) => {
+exports.getCurrentUser = async (req, res, next) => { 
   try {
     const user = req.user;
 
@@ -128,6 +133,6 @@ exports.getCurrentUser = async (req, res) => {
       subscription: user.subscription 
     });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    next(err); 
   }
 };

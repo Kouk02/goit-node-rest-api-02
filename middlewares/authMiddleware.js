@@ -5,7 +5,12 @@ const JWT_SECRET = process.env.TOKEN_SECRET || 'default_secret_key';
 
 exports.verifyToken = async (req, res, next) => {
   try {
-    const token = req.header('Authorization').replace('Bearer ', '');
+    const authHeader = req.header('Authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      throw new Error();
+    }
+    const token = authHeader.slice(7); 
+
     const decoded = jwt.verify(token, JWT_SECRET);
     const user = await User.findById(decoded.sub);
 

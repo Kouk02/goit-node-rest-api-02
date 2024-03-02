@@ -5,9 +5,10 @@ const contactSchema = new Schema({
   owner: {
     type: Schema.Types.ObjectId,
     ref: 'User',
+    required: true
   },
 });
 
-const Contact = mongoose.model('Contact', contactSchema);
+const Contacts = mongoose.model('Contacts', contactSchema);
 
-module.exports = Contact;
+module.exports = Contacts;
