@@ -2,7 +2,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/userModel');
 const Joi = require('joi');
-const Contacts = require('../schemas/authSchemas');
+const { Contacts } = require('../schemas/authSchemas');
 
 const JWT_SECRET = process.env.TOKEN_SECRET || 'default_secret_key';
 
@@ -35,21 +35,21 @@ exports.registerUser = async (req, res, next) => {
 
     const savedUser = await newUser.save();
 
-    
-    const newContact = new Contacts({
-      owner: savedUser._id,
-    });
-    await newContact.save();
-
     const payload = {
       sub: savedUser._id,
       email: savedUser.email,
       subscription: savedUser.subscription
     };
     const token = jwt.sign(payload, JWT_SECRET);
+    
 
     savedUser.token = token;
     await savedUser.save();
+
+    const newContact = new Contacts({
+      owner: savedUser._id,
+    });
+    await newContact.save();
 
     res.status(201).json({ 
       user: { 
@@ -76,7 +76,7 @@ exports.loginUser = async (req, res) => {
 
     const { email, password } = req.body;
     const user = await User.findOne({ email });
-  const passwordMatch = user ? await bcrypt.compare(password, user.password) : false;
+    const passwordMatch = user ? await bcrypt.compare(password, user.password) : false;
     if (!user || !passwordMatch) {
       return res.status(401).json({ message: "Email or password is wrong" });
     }
@@ -87,6 +87,9 @@ exports.loginUser = async (req, res) => {
       subscription: user.subscription
     };
     const token = jwt.sign(payload, JWT_SECRET, { expiresIn: '1h' });
+ 
+    user.token = token;
+    await user.save();
 
     const responseData = {
       token,
