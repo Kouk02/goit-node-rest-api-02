@@ -20,11 +20,7 @@ const userSchema = new Schema({
   token: {
     type: String,
     default: null,
-  },
-  owner: {
-    type: Schema.Types.ObjectId,
-    ref: 'User',
-  },
+  }
 });
 
 const User = mongoose.model('User', userSchema);

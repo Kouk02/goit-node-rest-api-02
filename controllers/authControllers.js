@@ -105,11 +105,15 @@ exports.loginUser = async (req, res) => {
   }
 };
 
-exports.logoutUser = async (req, res, next) => { 
+exports.logoutUser = async (req, res, next) => {
   try {
-    const userId = req.user._id;
+    if (!req.user) {
+      return res.status(401).json({ message: "Not authorized" });
+    }
 
+    const userId = req.user._id;
     const user = await User.findById(userId);
+
     if (!user) {
       return res.status(401).json({ message: "Not authorized" });
     }
@@ -119,23 +123,18 @@ exports.logoutUser = async (req, res, next) => {
 
     res.status(204).send();
   } catch (err) {
-    next(err); 
+    next(err);
   }
 };
 
-exports.getCurrentUser = async (req, res, next) => { 
+exports.getCurrentUser = async (req, res, next) => {
   try {
     const user = req.user;
-
-    if (!user) {
-      return res.status(401).json({ message: "Not authorized" });
-    }
-
-    res.status(200).json({ 
-      email: user.email, 
-      subscription: user.subscription 
+    res.status(200).json({
+      email: user.email,
+      subscription: user.subscription
     });
   } catch (err) {
-    next(err); 
+    next(err);
   }
 };

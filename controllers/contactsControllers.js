@@ -4,7 +4,9 @@ const validateBody = require("../helpers/validateBody");
 
 async function getAllContacts(req, res, next) {
   try {
-    const contacts = await listContacts();
+ 
+    const userId = req.user._id;
+    const contacts = await listContacts(userId);
     res.status(200).json(contacts);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -17,6 +19,10 @@ async function getContact(req, res, next) {
     const contact = await getContactById(id);
     if (!contact) {
       return res.status(404).json({ message: "Not found" });
+    }
+  
+    if (contact.owner.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Access denied" });
     }
     res.status(200).json(contact);
   } catch (error) {
@@ -31,6 +37,10 @@ async function deleteContact(req, res, next) {
     if (!deletedContact) {
       return res.status(404).json({ message: "Not found" });
     }
+   
+    if (deletedContact.owner.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Access denied" });
+    }
     res.status(200).json(deletedContact);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -44,14 +54,13 @@ async function createContact(req, res, next) {
       return res.status(400).json({ message: error.message });
     }
     const { name, email, phone } = req.body;
-    const newContact = await addContact(name, email, phone);
+   
+    const newContact = await addContact(name, email, phone, req.user._id);
     res.status(201).json(newContact);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 }
-
-
 
 async function updateContactById(req, res, next) {
   const { id } = req.params;
@@ -66,6 +75,10 @@ async function updateContactById(req, res, next) {
     if (!existingContact) {
       return res.status(404).json({ message: "Contact not found" });
     }
+   
+    if (existingContact.owner.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Access denied" });
+    }
 
     const updatedContact = await updateContact(id, req.body); 
 
@@ -75,7 +88,6 @@ async function updateContactById(req, res, next) {
   }
 }
 
-
 async function updateFavoriteStatus(req, res, next) {
   const { id } = req.params;
 
@@ -83,6 +95,10 @@ async function updateFavoriteStatus(req, res, next) {
     const existingContact = await getContactById(id);
     if (!existingContact) {
       return res.status(404).json({ message: "Contact not found" });
+    }
+    
+    if (existingContact.owner.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Access denied" });
     }
 
     const { error: validationError } = patchContactSchema.validate(req.body);
