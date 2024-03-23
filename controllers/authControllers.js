@@ -158,19 +158,16 @@ exports.updateUserAvatar = async (req, res) => {
     const newAvatarPath = path.join(avatarsDir, avatarFileName);
     fs.renameSync(avatarFile.path, newAvatarPath);
 
-    const updatedUser = await User.findByIdAndUpdate(
+    await User.findByIdAndUpdate(
       userId,
       { avatarURL },
       { new: true }
     );
 
-    if (!updatedUser) {
-      return res.status(404).json({ message: 'Користувач не знайдений' });
-    }
-
-    res.json(updatedUser);
+    // Отримуємо тільки URL аватарки
+    res.json({ avatarURL });
   } catch (error) {
-    console.error('Помилка оновлення аватарки:', error);
-    res.status(500).json({ message: 'Помилка оновлення аватарки. Будь ласка, спробуйте ще раз' });
+    console.error('Error updating avatar:', error);
+    res.status(500).json({ message: 'Error updating avatar. Please try again' });
   }
 };
