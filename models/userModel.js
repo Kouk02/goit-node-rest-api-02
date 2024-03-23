@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
+
 const userSchema = new Schema({
   id: mongoose.Schema.Types.ObjectId,
   password: {
@@ -20,7 +21,11 @@ const userSchema = new Schema({
   token: {
     type: String,
     default: null,
-  }
+  },
+      avatarURL: {
+      type: String,
+      default: "/avatars/avatar.jpg",
+    },
 });
 
 const User = mongoose.model('User', userSchema);

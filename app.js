@@ -7,6 +7,7 @@ const router = require("./routes/authRouter.js");
 require('dotenv').config(); 
 
 
+
 const dbUrl = process.env.DB_HOST;
 
 mongoose.connect(dbUrl, { useNewUrlParser: true, useUnifiedTopology: true });
@@ -26,6 +27,8 @@ app.use(express.json());
 
 app.use('/api/users', router);
 app.use('/api/contacts', contactsRouter);
+app.use(express.static("public"));
+
 
 app.use((_, res) => {
   res.status(404).json({ message: "Route not found" });
@@ -40,3 +43,7 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server is running. Use our API on port: ${PORT}`);
 });
+
+
+
+
