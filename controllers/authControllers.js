@@ -7,6 +7,7 @@ const gravatar = require('gravatar');
 const Jimp = require("jimp");
 const path = require("path");
 const fs = require('fs');
+const { httpError } = require('../helpers/HttpError');
 
 const JWT_SECRET = process.env.TOKEN_SECRET || 'default_secret_key';
 
@@ -170,4 +171,20 @@ exports.updateUserAvatar = async (req, res) => {
     console.error('Error updating avatar:', error);
     res.status(500).json({ message: 'Error updating avatar. Please try again' });
   }
+};
+
+
+exports.verifyEmail = async (req, res) => {
+  const { verificationToken } = req.params;
+  const user = await User.findOne({ verificationToken });
+
+  if (!user) {
+    throw httpError(404, 'User not found');
+  }
+
+  user.verificationToken = null;
+  user.isVerified = true;
+  await user.save();
+
+  res.json({ message: 'Verification successful' });
 };

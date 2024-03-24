@@ -25,7 +25,15 @@ const userSchema = new Schema({
       avatarURL: {
       type: String,
       default: "/avatars/avatar.jpg",
-    },
+  },
+      verificationToken: {
+  type: String,
+  required: [true, 'Verify token is required'],
+},
+isVerified: {
+  type: Boolean,
+  default: false,
+}
 });
 
 const User = mongoose.model('User', userSchema);
