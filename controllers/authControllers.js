@@ -146,7 +146,7 @@ exports.updateUserAvatar = async (req, res) => {
       return res.status(400).json({ message: 'No avatar file provided' });
     }
 
-    const tmpDir = path.join(__dirname, '../tmp');
+    const tmpDir = path.join(__dirname, '../temp');
     const avatarFileName = `${userId}_photo.jpg`;
     const avatarsDir = path.join(__dirname, '../public/avatars');
     const avatarURL = `/avatars/${avatarFileName}`;
@@ -164,7 +164,7 @@ exports.updateUserAvatar = async (req, res) => {
       { new: true }
     );
 
-    // Отримуємо тільки URL аватарки
+  
     res.json({ avatarURL });
   } catch (error) {
     console.error('Error updating avatar:', error);
