@@ -7,7 +7,12 @@ const gravatar = require('gravatar');
 const Jimp = require("jimp");
 const path = require("path");
 const fs = require('fs');
-const { httpError } = require('../helpers/HttpError');
+const { httpError } = require('../helpers/httpError');
+const transport = require('../helpers/email');
+const { v4: uuidv4 } = require('uuid');
+
+
+
 
 const JWT_SECRET = process.env.TOKEN_SECRET || 'default_secret_key';
 
@@ -29,33 +34,56 @@ exports.registerUser = async (req, res, next) => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
     const avatarUrl = gravatar.url(email, { s: '200', r: 'pg', d: 'retro' });
+    const verificationToken = uuidv4(); 
+    const verifyEmailLink = `${req.protocol}://${req.get('host')}/auth/verify/${verificationToken}`;
     const newUser = new User({
       email,
       password: hashedPassword,
       subscription: "starter",
-      avatarURL: avatarUrl
+      avatarURL: avatarUrl,
+      verificationToken 
     });
-    const savedUser = await newUser.save();
+    await newUser.save();
+
+    const mailOptions = {
+      from: 'metasrvc@meta.ua',
+      to: newUser.email,
+      subject: 'Verify your email address',
+      html: `<p>Please click the following link to verify your email address:</p>
+             <a href="${verifyEmailLink}">${verifyEmailLink}</a>`,
+    };
+
+    transport.sendMail(mailOptions, (error, info) => {
+      if (error) {
+        console.error(error);
+      } else {
+        console.log('Email sent: ' + info.response);
+      }
+    });
+
     const payload = {
-      sub: savedUser._id,
-      email: savedUser.email,
-      subscription: savedUser.subscription
+      sub: newUser._id,
+      email: newUser.email,
+      subscription: newUser.subscription
     };
     const token = jwt.sign(payload, JWT_SECRET);
-    savedUser.token = token;
-    await savedUser.save();
-    const newContact = new Contacts({ owner: savedUser._id });
+    newUser.token = token;
+    await newUser.save();
+
+    const newContact = new Contacts({ owner: newUser._id });
     await newContact.save();
+
     res.status(201).json({
       user: {
-        email: savedUser.email,
-        subscription: savedUser.subscription
+        email: newUser.email,
+        subscription: newUser.subscription
       }
     });
   } catch (err) {
     next(err);
   }
 };
+
 
 exports.loginUser = async (req, res) => {
   try {
@@ -71,8 +99,16 @@ exports.loginUser = async (req, res) => {
 
     const { email, password } = req.body;
     const user = await User.findOne({ email });
-    const passwordMatch = user ? await bcrypt.compare(password, user.password) : false;
-    if (!user || !passwordMatch) {
+    if (!user) {
+      return res.status(401).json({ message: "Email or password is wrong" });
+    }
+
+    if (!user.isVerified) {
+      return res.status(401).json({ message: "Email not verified" });
+    }
+
+    const passwordMatch = await bcrypt.compare(password, user.password);
+    if (!passwordMatch) {
       return res.status(401).json({ message: "Email or password is wrong" });
     }
 
@@ -81,10 +117,11 @@ exports.loginUser = async (req, res) => {
       email: user.email,
       subscription: user.subscription
     };
+
     const token = jwt.sign(payload, JWT_SECRET, { expiresIn: '1h' });
- 
-    user.token = token;
-    await user.save();
+
+    
+    await User.findByIdAndUpdate(user._id, { token });
 
     const responseData = {
       token,
@@ -96,9 +133,11 @@ exports.loginUser = async (req, res) => {
 
     res.status(200).json(responseData);
   } catch (err) {
+    console.log(err.message);
     res.status(500).json({ error: err.message });
   }
 };
+
 
 exports.logoutUser = async (req, res, next) => {
   try {
@@ -175,16 +214,59 @@ exports.updateUserAvatar = async (req, res) => {
 
 
 exports.verifyEmail = async (req, res) => {
-  const { verificationToken } = req.params;
-  const user = await User.findOne({ verificationToken });
+  try {
+    const { verificationToken } = req.params;
+    const user = await User.findOne({ verificationToken });
+
+    if (!user) {
+      // Якщо користувач не знайдений, повертаємо 404
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Позначаємо користувача як підтвердженого і зберігаємо зміни в базі даних
+    await User.findByIdAndUpdate(user._id, {
+      verificationToken: "",
+      isVerified: true,
+    })
+
+    // Відправляємо відповідь про успішну верифікацію
+    return res.json({ message: 'Verification successful' }); // Вказуємо, куди відправляти відповідь
+  } catch (error) {
+    // Обробка помилки
+    console.error('Error verifying email:', error);
+    return res.status(500).json({ message: 'Error verifying email. Please try again' }); // Вказуємо, куди відправляти відповідь
+  }
+};
+ 
+exports.resendVerificationEmail = async (req, res, next) => {
+  const { email } = req.body;
+  const user = await User.findOne({ email });
 
   if (!user) {
-    throw httpError(404, 'User not found');
+    return next(httpError(404, 'User not found'));
   }
 
-  user.verificationToken = null;
-  user.isVerified = true;
-  await user.save();
+  if (user.isVerified) {
+    return res.status(400).json({ message: 'Verification has already been passed' });
+  }
 
-  res.json({ message: 'Verification successful' });
-};
+  const verifyEmailLink = `${req.protocol}://${req.get('host')}/auth/verify/${user.verificationToken}`;
+
+  const mailOptions = {
+    from: 'kouk2002@meta.ua',
+    to: user.email,
+    subject: 'Verify your email address',
+    html: `<p>Please click the following link to verify your email address:</p>
+         <a href="${verifyEmailLink}">${verifyEmailLink}</a>`,
+  };
+
+  transport.sendMail(mailOptions, (error, info) => {
+    if (error) {
+      console.error(error);
+      return next(httpError(500, 'Failed to send verification email'));
+    } else {
+      console.log('Email sent: ' + info.response);
+      res.json({ message: 'Verification email sent' });
+    }
+  });
+}

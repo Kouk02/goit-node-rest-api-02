@@ -5,7 +5,7 @@ const mongoose = require('mongoose');
 const contactsRouter = require("./routes/contactsRouter.js");
 const router = require("./routes/authRouter.js");
 require('dotenv').config(); 
-
+const { verifyEmail } = require('./controllers/authControllers');
 
 
 const dbUrl = process.env.DB_HOST;
@@ -25,6 +25,8 @@ app.use(morgan("tiny"));
 app.use(cors());
 app.use(express.json());
 
+app.use('/auth/verify/:verificationToken', verifyEmail);
+app.use('/auth', router);
 app.use('/api/users', router);
 app.use('/api/contacts', contactsRouter);
 app.use(express.static("public"));

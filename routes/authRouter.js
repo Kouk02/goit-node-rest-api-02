@@ -6,7 +6,12 @@ const  validateAuthBody  = require('../middlewares/validateAuthBody');
 const { registerSchema, loginSchema } = require('../schemas/authSchemas'); 
 const configureMulter = require('../middlewares/multer');
 const { verifyEmail } = require('../controllers/authControllers');
+const { resendVerificationEmail } = require('../controllers/authControllers');
+const { validateBody } = require('../middlewares/validators');
+const { resendVerifyEmailSchema } = require('../schemas/authSchemas');
 const upload = configureMulter();
+
+
 
 
 router.post("/register", validateAuthBody(registerSchema), registerUser); 
@@ -16,5 +21,6 @@ router.get('/current', verifyToken, getCurrentUser);
 
 router.patch('/avatars', verifyToken, upload.single('avatar'), updateUserAvatar);
 router.get('/verify/:verificationToken', verifyEmail);
+router.post('/verify', validateBody(resendVerifyEmailSchema), resendVerificationEmail);
 
 module.exports = router;

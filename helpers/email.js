@@ -1,10 +1,13 @@
 const nodemailer = require('nodemailer');
+require('dotenv').config();
 
 const transport = nodemailer.createTransport({
-  service: 'meta', // або інший провайдер, який ви використовуєте
+  host: 'smtp.meta.ua',
+port: 465,
+secure: true,
   auth: {
-    user: 'kouk2002@meta.ua', // ваша електронна адреса
-    pass: 'R3Bp5V95mz' // ваш пароль (краще використовувати додаткові пароль або токен для безпеки)
+    user: 'metasrvc@meta.ua',
+    pass: process.env.API_KEY 
   }
 });
 

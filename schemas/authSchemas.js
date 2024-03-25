@@ -20,10 +20,22 @@ const loginSchema = Joi.object({
   password: Joi.string().required()
 });
 
+
+
+
+const resendVerifyEmailSchema = Joi.object({
+  email: Joi.string().email().required(),
+});
+
+
+
+
 const Contacts = mongoose.model('Contacts', contactSchema);
+
 
 module.exports = {
   Contacts,
   registerSchema,
-  loginSchema
+  loginSchema,
+  resendVerifyEmailSchema
 };
